@@ -2,8 +2,11 @@
 
 import json
 
-from kokomi.miHoYo.Genshin.GetGacha import GachaException, getGachaLogs
 import matplotlib.pyplot as plt
+import pandas
+from kokomi.miHoYo.Genshin.GetGacha import GachaException, getGachaLogs
+from pandas import DataFrame as df
+from tabulate import tabulate
 
 characters = [
     "迪卢克", "琴", "莫娜", "七七", "刻晴",
@@ -13,10 +16,10 @@ characters = [
 ]
 
 gacha_ty = {
-    100: '新手祈愿',
-    200: '奔行世间',
     301: '角色限定祈愿',
-    302: '武器限定祈愿'
+    302: '武器限定祈愿',
+    200: '奔行世间',
+    100: '新手祈愿'
 }
 
 
@@ -76,7 +79,6 @@ def AnalysisGacha(gacha_type: int):
     '''分析抽卡记录'''
 
     name = gacha_ty[gacha_type]
-
     print(name, f"  {getEndId(gacha_type)}")
     all_data = readGachaLogsNb(gacha_type)
     all_data.reverse()
@@ -87,7 +89,7 @@ def AnalysisGacha(gacha_type: int):
         cnt += 1
         if d['rank_type'] == '5':
             fives.append((d['name'], cnt))
-            print(f"{d['name']} [{cnt}]")
+            #print(f"{d['name']} [{cnt}]")
             cnt = 0
     print(f'共{len(all_data)}抽，已累计{cnt}次未出五星.')
 
@@ -97,7 +99,7 @@ def AnalysisGacha(gacha_type: int):
         print(f'共计{len(fives)}')
 
     print('')
-    fives.insert(0, ('blank', cnt))
+    fives.insert(0, ('累计', cnt))
     return fives
 
 
@@ -108,17 +110,18 @@ def SeeIt(all_five: dict):
     plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
     plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
+    # 各个池子五统计
     plt.subplot(1, 2, 1)
     plt.pie(
         [len(five)-1 for five in all_five.values()],
         labels=[f'{five[0]}[{len(five[1])-1}]' for five in all_five.items()]
     )
 
-    w = 0
-    c = 0
+    # 武器和角色统计
+    w = c = 0
     for v in all_five.values():
         for dv in v:
-            if dv[0] == 'blank':
+            if dv[0] == '累计':
                 continue
             if dv[0] in characters:
                 c += 1
@@ -133,16 +136,29 @@ def SeeIt(all_five: dict):
     plt.show()
 
 
+def Pandas_DataFrame(all_five: dict):
+    all_ff = {}
+    max_len = max([len(five) for five in all_five.values()])
+    for five in all_five.items():
+        all_ff[five[0]] = [f'{f[0]}[{f[1]}]' for f in five[1]]
+        all_ff[five[0]].extend([None]*(max_len-len(all_ff[five[0]])))
+
+    #pandas.set_option('display.unicode.ambiguous_as_wide', True)
+    #pandas.set_option('display.unicode.east_asian_width', True)
+    #pandas.set_option('display.width', 360)
+    d = df(all_ff)
+    print(tabulate(d, headers=d.head(0), tablefmt='fancy_grid'))
+
+
 if __name__ == '__main__':
     # updateNb()
 
-    all_five = {
-
-    }
+    all_five = {}
     for ty in gacha_ty.items():
         try:
             all_five[ty[1]] = AnalysisGacha(ty[0])
         except GachaException as g:
             print(g.what())
 
+    Pandas_DataFrame(all_five)
     # SeeIt(all_five)
