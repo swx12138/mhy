@@ -27,5 +27,5 @@ if __name__ == '__main__':
                 "id": "0"
             })
         all_data.reverse()
-        with open(item[1]+'_nb.json', 'w', encoding='utf-8') as file:
+        with open(item[1]+'_export.json', 'w', encoding='utf-8') as file:
             json.dump(all_data, fp=file, ensure_ascii=False, indent=4)

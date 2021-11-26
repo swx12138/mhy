@@ -1,7 +1,8 @@
 
 import webbrowser
+import getpass
 
-log_path = r"C:\Users\waifu_bzh\AppData\LocalLow\miHoYo\原神\output_log.txt"
+log_path = f"C:\\Users\\{getpass.getuser()}\\AppData\\LocalLow\\miHoYo\\原神\\output_log.txt"
 
 if __name__ == '__main__':
     with open(log_path, 'r', encoding='utf-8') as log:

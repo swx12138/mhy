@@ -1,11 +1,9 @@
 ##
 
-import sys
 import json
 
 from kokomi.miHoYo.Genshin.GetGacha import GachaException, getGachaLogs
 import matplotlib.pyplot as plt
-from numpy import fabs
 
 characters = [
     "迪卢克", "琴", "莫娜", "七七", "刻晴",
