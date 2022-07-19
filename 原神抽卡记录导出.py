@@ -1,15 +1,12 @@
 ##
 
 import json
-import sys
-from datetime import datetime
 from os import chdir, mkdir
 
 import matplotlib.pyplot as plt
-import pandas
 from genericpath import exists
 from kokomi.miHoYo.Genshin.GetGacha import GachaException, getGachaLogs
-from pandas import DataFrame as df
+from pandas import DataFrame, ExcelWriter
 from tabulate import tabulate
 
 characters = [
@@ -38,7 +35,39 @@ characters = [
     "夜兰",
 ]
 
-gacha_ty = {301: "角色限定祈愿", 302: "武器限定祈愿", 200: "奔行世间", 100: "新手祈愿"}
+gacha_pools = {
+    301: "角色限定祈愿",
+    302: "神铸赋形",
+    200: "奔行世间",
+    100: "新手祈愿",
+}
+
+
+def read_loacl_json(id):
+    """读取本地json并转为DataFrame"""
+    all_data = readGachaLogsNb(id)
+    all_data.reverse()
+
+    times_count = 0
+    low_count = 0
+    baeuty_data = []
+    for data in all_data:
+        times_count += 1
+        low_count += 1
+        baeuty_data.append(
+            {
+                "时间": data["time"],
+                "名称": data["name"],
+                "类别": data["item_type"],
+                "星级": data["rank_type"],
+                "总次数": times_count,
+                "保底内": low_count,
+            }
+        )
+        if data["rank_type"] == "5":
+            low_count = 0
+
+    return DataFrame(baeuty_data)
 
 
 def readGachaLogs(gacha_type: int):
@@ -47,7 +76,7 @@ def readGachaLogs(gacha_type: int):
         return json.load(fp=file)
 
 
-def readGachaLogsNb(gacha_type: int):
+def readGachaLogsNb(gacha_type: int) -> list:
     """读取本地抽卡记录"""
     with open(str(gacha_type) + "_nb.json", "r", encoding="utf-8") as file:
         return json.load(fp=file)
@@ -66,7 +95,7 @@ class GachaLogEmptyList(Exception):
 def updateNb(gacha_type: int):
     """从祈愿记录页更新本地数据"""
 
-    print("updating  ", gacha_ty[gacha_type], f"  {getEndId(gacha_type)}")
+    print("updating  ", gacha_pools[gacha_type], f"  {getEndId(gacha_type)}")
 
     all_data = getGachaLogs(gacha_type)
     if not all_data:
@@ -95,76 +124,120 @@ def updateNbs():
     print("update all done.")
 
 
-def AnalysisGacha(gacha_type: int):
-    """分析抽卡记录"""
-
-    name = gacha_ty[gacha_type]
-    print(name, f"  {getEndId(gacha_type)}")
-    all_data = readGachaLogsNb(gacha_type)
-    all_data.reverse()
-
-    cnt = 0
-    fives = []
-    for d in all_data:
-        cnt += 1
-        if d["rank_type"] == "5":
-            fives.append((d["name"], cnt))
-            # print(f"{d['name']} [{cnt}]")
-            cnt = 0
-    print(f"共{len(all_data)}抽，已累计{cnt}次未出五星.")
-
-    try:
-        print(f"共计{len(fives)}，平均{round((len(all_data)-cnt)/len(fives),2)}次一个五星.")
-    except:
-        print(f"共计{len(fives)}")
-
-    print("")
-    fives.append(("累计", cnt))
-    return fives
-
-
-def SeeIt(all_five: dict):
+# TODO:rebuild
+def See_LocalData(all_local: dict):
     """可视化"""
 
     # 支持中文
     plt.rcParams["font.sans-serif"] = ["SimHei"]  # 用来正常显示中文标签
     plt.rcParams["axes.unicode_minus"] = False  # 用来正常显示负号
 
-    # 各个池子五统计
-    plt.subplot(1, 2, 1)
-    plt.pie(
-        [len(five) - 1 for five in all_five.values()],
-        labels=[f"{five[0]}[{len(five[1])-1}]" for five in all_five.items()],
-    )
+    # 每个池子统计
+    index = 1
+    for pname in all_local:
+        # 四星五星数量
+        count = {
+            "five": 0,
+            "four": 0,
+            "all": len(all_local[pname]),
+        }
 
-    # 武器和角色统计
-    w = c = 0
-    for v in all_five.values():
-        for dv in v:
-            if dv[0] == "累计":
-                continue
-            if dv[0] in characters:
-                c += 1
-            else:
-                w += 1
-    plt.subplot(1, 2, 2)
-    plt.pie([w, c], labels=[f"武器[{w}]", f"角色[{c}]"])
+        for data in all_local[pname]:
+            if data["rank_type"] == "5":
+                count["five"] += 1
+            elif data["rank_type"] == "4":
+                count["four"] += 1
 
+        plt.subplot(2, 2, index)
+
+        plt.pie(
+            x=[
+                count["five"],
+                count["four"],
+            ],
+            labels=["五星", "四星"],
+            colors=["yellow", "purple"],
+        )
+
+        index += 1
+    plt.title("统计")
     plt.show()
 
 
-def Pandas_DataFrame(all_five: dict):
-    all_ff = {}
-    max_len = max([len(five) for five in all_five.values()])
-    for five in all_five.items():
-        all_ff[five[0]] = [f"{f[0]}[{f[1]}]" for f in five[1]]
-        all_ff[five[0]].extend([None] * (max_len - len(all_ff[five[0]])))
+def Read_Local_Data():
+    """读取所有本地记录"""
+    all_data = {}
+    for pool_id in gacha_pools:
+        try:
+            pool_data = readGachaLogsNb(pool_id)
+            pool_data.reverse()
+            all_data[gacha_pools[pool_id]] = pool_data
+        except GachaException as g:
+            print(g.what())
+    return all_data
 
+
+def Count_Five(local_data):
+    """统计五星数量"""
+    all_five = {}
+    for pname in local_data:
+        try:
+            all_five[pname] = []
+            gacha_times = 0
+            pool_data = local_data[pname]
+            for data in pool_data:
+                gacha_times += 1
+                if data["rank_type"] == "5":
+                    all_five[pname].append({"name": data["name"], "times": gacha_times})
+                    gacha_times = 0
+        except GachaException as g:
+            print(g.what())
+    return all_five
+
+
+def PandasDF_PrintConsole(all_five: dict, export: bool = False):
+    """输出五星统计表格到控制台"""
+    all_ff = {}
+    max_len = max([len(five) for five in all_five.values()])  # 5星最多的池子里5星数量
+    for five in all_five:
+        fives = all_five[five]
+        all_ff[five] = [f"{f['name']}[{f['times']}]" for f in fives]
+        all_ff[five].extend([None] * (max_len - len(all_ff[five])))
+
+    # 控制台输出
     # pandas.set_option('display.unicode.ambiguous_as_wide', True)
     # pandas.set_option('display.unicode.east_asian_width', True)
     # pandas.set_option('display.width', 360)
-    d = df(all_ff)
-    print(tabulate(d, headers=d.head(0), tablefmt="fancy_grid"))
+    df = DataFrame(all_ff)
+    print(tabulate(df, headers=df.head(0), tablefmt="fancy_grid"))
+
+    # 导出excel
+    if export:
+        with ExcelWriter(f"export.xlsx") as writer:
+            for five in all_five:
+                DataFrame(all_five[five]).to_excel(
+                    writer,
+                    sheet_name=five,
+                    index=False,
+                    encoding="utf-8",
+                )
+
+
+def main():
+    # 更新本地记录
+    updateNbs()
+
+    # 读取本地记录
+    all_data = Read_Local_Data()
+
+    # 统计5星
+    all_five = Count_Five(all_data)
+
+    # 控制台输出5星统计表格
+    #   - 可选：输出到excel
+    PandasDF_PrintConsole(all_five)
+
+    # See_LocalData(all_data)
 
 
 if __name__ == "__main__":
@@ -173,31 +246,4 @@ if __name__ == "__main__":
         mkdir(HOME_PATH)
     chdir(HOME_PATH)
 
-    updateNbs()
-
-    all_five = {}
-    for ty in gacha_ty.items():
-        try:
-            all_five[ty[1]] = AnalysisGacha(ty[0])
-        except GachaException as g:
-            print(g.what())
-
-    # 控制台输出
-    Pandas_DataFrame(all_five)
-
-    # 保存到excel
-    # df(all_five).to_excel("114514.xlsx")
-
-    code = datetime.now().month * 100 + datetime.now().day
-    with open(
-        f"{'0'+str(code) if code<1000 else code}.genshin", "w+", encoding="utf-8"
-    ) as fil:
-        sys.stdout = fil
-        for ty in gacha_ty.items():
-            try:
-                AnalysisGacha(ty[0])
-            except GachaException as g:
-                print(g.what())
-        Pandas_DataFrame(all_five)
-
-    # SeeIt(all_five)
+    main()
