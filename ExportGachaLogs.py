@@ -9,6 +9,7 @@ from kokomi.miHoYo.Genshin.GetGacha import GachaException, getGachaLogs
 from pandas import DataFrame, ExcelWriter
 from tabulate import tabulate
 
+
 characters = [
     "迪卢克",
     "琴",
@@ -41,33 +42,6 @@ gacha_pools = {
     200: "奔行世间",
     100: "新手祈愿",
 }
-
-
-def read_loacl_json(id):
-    """读取本地json并转为DataFrame"""
-    all_data = readGachaLogsNb(id)
-    all_data.reverse()
-
-    times_count = 0
-    low_count = 0
-    baeuty_data = []
-    for data in all_data:
-        times_count += 1
-        low_count += 1
-        baeuty_data.append(
-            {
-                "时间": data["time"],
-                "名称": data["name"],
-                "类别": data["item_type"],
-                "星级": data["rank_type"],
-                "总次数": times_count,
-                "保底内": low_count,
-            }
-        )
-        if data["rank_type"] == "5":
-            low_count = 0
-
-    return DataFrame(baeuty_data)
 
 
 def readGachaLogs(gacha_type: int):

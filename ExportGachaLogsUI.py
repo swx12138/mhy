@@ -1,0 +1,2 @@
+def WinMain():
+    """UI"""
