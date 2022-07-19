@@ -1,5 +1,5 @@
 import pylab as lab
-from kokomi.miHoYo.Genshin import ConfigData
+from miHoYo.Genshin import ConfigData
 import itertools
 
 
@@ -23,4 +23,5 @@ def make_weapon_level_curve():
 
 
 if __name__ == "__main__":
-    ConfigData.Weapon.AllWeapon()
+    # ConfigData.Weapon.AllWeapon()
+    ConfigData.Avatar.Talent()

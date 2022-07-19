@@ -5,36 +5,10 @@ from os import chdir, mkdir
 
 import matplotlib.pyplot as plt
 from genericpath import exists
-from kokomi.miHoYo.Genshin.GetGacha import GachaException, getGachaLogs
 from pandas import DataFrame, ExcelWriter
 from tabulate import tabulate
 
-
-characters = [
-    "迪卢克",
-    "琴",
-    "莫娜",
-    "七七",
-    "刻晴",
-    "温迪",
-    "可莉",
-    "达达利亚",
-    "钟离",
-    "阿贝多",
-    "甘雨",
-    "魈",
-    "胡桃",
-    "优菈",
-    "万叶",
-    "霄宫",
-    "神里绫华",
-    "雷电将军",
-    "珊瑚宫心海",
-    "荒泷一斗",
-    "申鹤",
-    "神里凌人",
-    "夜兰",
-]
+from miHoYo.Genshin.Gacha import GachaException, getGachaLogs
 
 gacha_pools = {
     301: "角色限定祈愿",
@@ -98,7 +72,7 @@ def updateNbs():
     print("update all done.")
 
 
-# TODO:rebuild
+# TODO
 def See_LocalData(all_local: dict):
     """可视化"""
 
@@ -169,7 +143,7 @@ def Count_Five(local_data):
     return all_five
 
 
-def PandasDF_PrintConsole(all_five: dict, export: bool = False):
+def Print_Console(all_five: dict, export: bool = False):
     """输出五星统计表格到控制台"""
     all_ff = {}
     max_len = max([len(five) for five in all_five.values()])  # 5星最多的池子里5星数量
@@ -209,7 +183,7 @@ def main():
 
     # 控制台输出5星统计表格
     #   - 可选：输出到excel
-    PandasDF_PrintConsole(all_five)
+    Print_Console(all_five, True)
 
     # See_LocalData(all_data)
 
