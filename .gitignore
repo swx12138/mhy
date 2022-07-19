@@ -6,3 +6,4 @@ img/
 GachaData/
 predict/
 fish/
+__pycache__/
