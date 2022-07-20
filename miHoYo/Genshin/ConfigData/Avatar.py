@@ -30,18 +30,17 @@ def Flycloak():
         r"GenshinData\ExcelBinOutput\AvatarFlycloakExcelConfigData.json"
     )
     for each in data:
-        print("=" * 15, each["FlycloakId"], "=" * 15)
-        print("名称：", getTextMap(each["NameTextMapHash"]))
-        print("简介", getTextMap(each["DescTextMapHash"]))
-        print("id", each["MaterialId"])
+        print("=" * 15, each["flycloakId"], "=" * 15)
+        print("名称：", getTextMap(each["nameTextMapHash"]))
+        print("简介", getTextMap(each["descTextMapHash"]))
+        print("id", each["materialId"])
         print("\n")
 
 
 def LevelNeedExp():
     """等级经验"""
     data = OpenJsonFile(r"GenshinData\ExcelBinOutput\AvatarLevelExcelConfigData.json")
-    for each in data:
-        print(f"{each['Level']}\t{each['Exp']}")
+    return data
 
 
 def Skill():

@@ -1,6 +1,12 @@
-import pylab as lab
-from miHoYo.Genshin import ConfigData
 import itertools
+import json
+
+import pylab as lab
+from pandas import DataFrame, ExcelWriter
+from styleframe import StyleFrame, Styler
+
+from miHoYo.Genshin import ConfigData
+from miHoYo.Genshin.ConfigData.util import getTextMap
 
 
 def make_weapon_level_curve():
@@ -22,12 +28,53 @@ def make_weapon_level_curve():
     lab.savefig("weapon_level_exp_1.png")
 
 
+def char_level_curve():
+    exp = ConfigData.Avatar.LevelNeedExp()
+    # exp = DataFrame(exp)
+    # print(exp)
+    x = [e['level'] for e in exp]
+    y = list(itertools.accumulate([e['exp'] for e in exp]))
+    # print(x,y)
+    lab.plot(x, y)
+    lab.show()
+
+
 if __name__ == "__main__":
     # ConfigData.Weapon.AllWeapon()
-    talents = ConfigData.Avatar.Talent()
-    characters = []
-    for talent in talents:
-        characters.append(talent["openConfig"].split('_')[0])
-        if characters[-1] == 'Yelan':
-            print(talent["desc"])
-    print(list(set(characters)))
+    # talents = ConfigData.Avatar.Talent()
+    # characters = []
+    # for talent in talents:
+    #     characters.append(talent["openConfig"].split('_')[0])
+    #     if characters[-1] == 'Yelan':
+    #         print(talent["desc"])
+    # print(list(set(characters)))
+    # ConfigData.Avatar.Flycloak()
+
+    picked = {
+        "unreleased": [],
+        "hidden": [],
+    }
+    with open(r"GenshinData\TextMap\TextMapCHS.json", 'r', encoding="utf-8",) as file:
+        data = json.load(file)
+        for id in data:
+            word: str = data[id]
+            if -1 != word.find('$UNRELEASED'):
+                picked["unreleased"].append(word)
+            if -1 != word.find('（隐藏）'):
+                picked["hidden"].append(word)
+
+    with ExcelWriter("words.xlsx") as w:
+        styler = Styler(
+            bg_color='gray',
+            font_color='green',
+            horizontal_alignment='left',
+            wrap_text=False
+        )
+        for pi in picked:
+            sf = StyleFrame(
+                obj=DataFrame(picked[pi]),
+                styler_obj=styler,
+                columns=['A']
+            )
+            sf.set_column_width('A', width=150)
+            sf.to_excel(excel_writer=w, sheet_name=pi, encoding="utf-8",)
