@@ -24,4 +24,10 @@ def make_weapon_level_curve():
 
 if __name__ == "__main__":
     # ConfigData.Weapon.AllWeapon()
-    ConfigData.Avatar.Talent()
+    talents = ConfigData.Avatar.Talent()
+    characters = []
+    for talent in talents:
+        characters.append(talent["openConfig"].split('_')[0])
+        if characters[-1] == 'Yelan':
+            print(talent["desc"])
+    print(list(set(characters)))

@@ -59,6 +59,11 @@ def Talent():
     """命之座"""
     data = OpenJsonFile(r"GenshinData\ExcelBinOutput\AvatarTalentExcelConfigData.json")
     for each in data:
-        print("=" * 15, each["TalentId"], each["Icon"].split("_")[-2], "=" * 15)
-        print("名称", getTextMap(each["NameTextMapHash"]))
-        print("名称", getTextMap(each["DescTextMapHash"]))
+        # print("=" * 15, each["TalentId"], each["Icon"].split("_")[-2], "=" * 15)
+        # print("名称", getTextMap(each["NameTextMapHash"]))
+        # print("名称", getTextMap(each["DescTextMapHash"]))
+        nameTextMapHash = each.pop('nameTextMapHash')
+        each['name'] = getTextMap(nameTextMapHash)
+        descTextMapHash = each.pop('descTextMapHash')
+        each['desc'] = getTextMap(descTextMapHash)
+    return data

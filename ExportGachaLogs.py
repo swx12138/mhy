@@ -8,7 +8,7 @@ from genericpath import exists
 from pandas import DataFrame, ExcelWriter
 from tabulate import tabulate
 
-from miHoYo.Genshin.Gacha import GachaException, getGachaLogs
+from miHoYo.Genshin.Gacha import getGachaLogs
 
 gacha_pools = {
     301: "角色限定祈愿",
@@ -18,40 +18,43 @@ gacha_pools = {
 }
 
 
-def readGachaLogs(gacha_type: int):
-    """读取本地抽卡记录"""
+def Read_GachaLogs(gacha_type: int):
+    """[deprecated]读取本地抽卡记录"""
     with open(str(gacha_type) + ".json", "r", encoding="utf-8") as file:
         return json.load(fp=file)
 
 
-def readGachaLogsNb(gacha_type: int) -> list:
+def Read_GachaLogs_NewBetter(gacha_type: int) -> list:
     """读取本地抽卡记录"""
     with open(str(gacha_type) + "_nb.json", "r", encoding="utf-8") as file:
         return json.load(fp=file)
 
 
-def getEndId(gacha_type: int):
+def Get_EndId(gacha_type: int):
     with open(str(gacha_type) + "_nb.json", "r", encoding="utf-8") as file:
         return json.load(fp=file)[0]["id"]
 
 
-class GachaLogEmptyList(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+# class GachaLogEmptyList(Exception):
+#     def __init__(self, *args: object) -> None:
+#         super().__init__(*args)
 
 
-def updateNb(gacha_type: int):
+def Update_NewBetter(gacha_type: int):
     """从祈愿记录页更新本地数据"""
 
-    print("updating  ", gacha_pools[gacha_type], f"  {getEndId(gacha_type)}")
+    print("updating  ", gacha_pools[gacha_type], f"  {Get_EndId(gacha_type)}")
 
+    # 获取新数据
     all_data = getGachaLogs(gacha_type)
     if not all_data:
         # continue
-        raise GachaLogEmptyList
+        raise Exception("获取祈愿记录失败")
 
-    old_data = readGachaLogsNb(gacha_type)
+    # 读取本地文件
+    old_data = Read_GachaLogs_NewBetter(gacha_type)
 
+    # 合并新数据并写入本地文件
     with open(str(gacha_type) + "_nb.json", "w", encoding="utf-8") as file:
         json.dump(
             obj=all_data + old_data[len(all_data) - all_data.index(old_data[0]) :],
@@ -66,9 +69,9 @@ def updateNbs():
 
     for ty in [("武器", 302), ("角色", 301), ("常驻", 200), ("新手", 100)]:
         try:
-            updateNb(gacha_type=ty[1])
-        except GachaLogEmptyList:
-            continue
+            Update_NewBetter(gacha_type=ty[1])
+        except Exception as ex:
+            print(ex)
     print("update all done.")
 
 
@@ -117,11 +120,11 @@ def Read_Local_Data():
     all_data = {}
     for pool_id in gacha_pools:
         try:
-            pool_data = readGachaLogsNb(pool_id)
+            pool_data = Read_GachaLogs_NewBetter(pool_id)
             pool_data.reverse()
             all_data[gacha_pools[pool_id]] = pool_data
-        except GachaException as g:
-            print(g.what())
+        except Exception as g:
+            print(g)
     return all_data
 
 
@@ -131,15 +134,15 @@ def Count_Five(local_data):
     for pname in local_data:
         try:
             all_five[pname] = []
-            gacha_times = 0
+            gacha_times = 0 # 没五星的祈愿数量
             pool_data = local_data[pname]
             for data in pool_data:
                 gacha_times += 1
                 if data["rank_type"] == "5":
                     all_five[pname].append({"name": data["name"], "times": gacha_times})
                     gacha_times = 0
-        except GachaException as g:
-            print(g.what())
+        except Exception as g:
+            print(g)
     return all_five
 
 
@@ -149,8 +152,8 @@ def Print_Console(all_five: dict, export: bool = False):
     max_len = max([len(five) for five in all_five.values()])  # 5星最多的池子里5星数量
     for five in all_five:
         fives = all_five[five]
-        all_ff[five] = [f"{f['name']}[{f['times']}]" for f in fives]
-        all_ff[five].extend([None] * (max_len - len(all_ff[five])))
+        all_ff[five] = [f"{f['name']}[{f['times']}]" for f in fives] # name[times]
+        all_ff[five].extend([None] * (max_len - len(all_ff[five])))  # 长度对齐
 
     # 控制台输出
     # pandas.set_option('display.unicode.ambiguous_as_wide', True)

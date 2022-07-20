@@ -6,11 +6,11 @@ from os import chdir, mkdir
 import pandas
 from genericpath import exists
 
-from ExportGachaLogs import readGachaLogsNb
+from ExportGachaLogs import Read_GachaLogs_NewBetter
 
 
 def read_loacl_json(id):
-    all_data = readGachaLogsNb(id)
+    all_data = Read_GachaLogs_NewBetter(id)
     all_data.reverse()
 
     times_count = 0
