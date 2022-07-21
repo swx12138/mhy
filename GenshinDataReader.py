@@ -38,35 +38,27 @@ def char_level_curve():
     lab.plot(x, y)
     lab.show()
 
-
-if __name__ == "__main__":
-    # ConfigData.Weapon.AllWeapon()
-    # talents = ConfigData.Avatar.Talent()
-    # characters = []
-    # for talent in talents:
-    #     characters.append(talent["openConfig"].split('_')[0])
-    #     if characters[-1] == 'Yelan':
-    #         print(talent["desc"])
-    # print(list(set(characters)))
-    # ConfigData.Avatar.Flycloak()
-
+def pick_sp():
     picked = {
         "unreleased": [],
         "hidden": [],
     }
     with open(r"GenshinData\TextMap\TextMapCHS.json", 'r', encoding="utf-8",) as file:
         data = json.load(file)
+        filter = [
+            {"name": 'unreleased', "val": '$UNRELEASED'},
+            {"name": 'hidden', "val": '$HIDDEN'},
+        ]
         for id in data:
             word: str = data[id]
-            if -1 != word.find('$UNRELEASED'):
-                picked["unreleased"].append(word)
-            if -1 != word.find('（隐藏）'):
-                picked["hidden"].append(word)
+            for keyword in filter:
+                if -1 != word.find(keyword['val']):
+                    picked[keyword["name"]].append(word)
 
     with ExcelWriter("words.xlsx") as w:
         styler = Styler(
-            bg_color='gray',
-            font_color='green',
+            #bg_color='gray',
+            #font_color='green',
             horizontal_alignment='left',
             wrap_text=False
         )
@@ -78,3 +70,17 @@ if __name__ == "__main__":
             )
             sf.set_column_width('A', width=150)
             sf.to_excel(excel_writer=w, sheet_name=pi, encoding="utf-8",)
+
+
+if __name__ == "__main__":
+    # ConfigData.Weapon.AllWeapon()
+    # talents = ConfigData.Avatar.Talent()
+    # characters = []
+    # for talent in talents:
+    #     characters.append(talent["openConfig"].split('_')[0])
+    #     if characters[-1] == 'Yelan':
+    #         print(talent["desc"])
+    # print(list(set(characters)))
+    # ConfigData.Avatar.Flycloak()
+    ac = ConfigData.Achievement.Achievement()
+    DataFrame([(a["titleTextMapHash"],a["descTextMapHash"]) for a in ac]).to_excel("achievement.xlsx")

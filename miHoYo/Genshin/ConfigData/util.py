@@ -12,4 +12,7 @@ TextMap = OpenJsonFile(r"GenshinData\TextMap\TextMapCHS.json")
 
 
 def getTextMap(hash: int):
-    return TextMap[str(hash)]
+    try:
+        return TextMap[str(hash)]
+    except KeyError:
+        return ""
